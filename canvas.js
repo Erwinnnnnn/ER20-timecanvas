@@ -14,6 +14,8 @@ const circleSize = 2;
 const circleSizeActive = 3;
 const numberOfPointsX = Math.floor(((canvasWidth  - (margin * 2)) / pointDistance));
 const numberOfPointsY = Math.floor(((canvasHeight  - (margin * 2)) / pointDistance));
+const itemWidth = 8;
+const itemSpacing = 1;
 
 const numbers = [[
     [0,0,0,1,1,0,0,0],
@@ -30,15 +32,15 @@ const numbers = [[
     [0,0,0,0,0,1,1,0],
     [0,0,0,0,1,1,0,0],
     [0,0,0,1,1,0,0,0],
-    [0,0,1,1,1,1,0,0],
-    [0,0,1,1,1,1,0,0],
+    [0,0,1,1,1,0,0,0],
+    [0,1,1,1,1,1,1,0],
     [0,1,1,1,1,1,1,0]]];
 
-const currentTime = '122121';
+const currentTime = '121212';
 
 function init() {
     clear();
-    canvas.width = 1100;
+    canvas.width = 1000;
     canvas.height = 380;
     setGridPositions();
     setTimeToVisual(currentTime);
@@ -79,13 +81,12 @@ function setNumberPositions(number, startPos) {
 
 function setTimeToVisual(time) {
     let timeArray = Array.from(time);
-    let xPosition = 5;
+    let xPosition = Math.ceil((numberOfPointsX - (timeArray.length * itemWidth) + ((timeArray.length - 1) * itemSpacing)) / 2);
     for(let i = 0; i < timeArray.length; i++) {
         let timeChar = timeArray[i];
         setNumberPositions(timeChar - 1, numberOfPointsX * 8 + xPosition);
-        xPosition += 10;
+        xPosition += itemSpacing + itemWidth;
     }
-
 }
 
 function animate() {
