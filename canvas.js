@@ -8,14 +8,24 @@ const pointDistance = 12;
 const margin = 40;
 const canvasWidth = canvas.width;
 const canvasHeight = canvas.height;
-const circleFill = 'rgba(152,156,187,1)';
+const circleFill = 'rgba(255,255,255,0.4)';
 const circleFillActive = 'rgba(255,255,255,1)';
-const circleSize = 2;
-const circleSizeActive = 3;
+const minCircleSize = 0.1;
+const maxCircleSize = 4;
+const minCircleSizeActive = 4;
+const maxCircleSizeActive = 4;
 const numberOfPointsX = Math.floor(((canvasWidth  - (margin * 2)) / pointDistance));
 const numberOfPointsY = Math.floor(((canvasHeight  - (margin * 2)) / pointDistance));
 const itemWidth = 8;
 const itemSpacing = 1;
+const growSpeed = 50;
+const startingSpeed = 150;
+
+function rnd(start, end) {
+    if (typeof end === 'undefined') { end = start; start = 0; }
+    if(end === start){ return end; }
+    return parseFloat(((Math.random() * end) + start).toFixed(2));
+}
 
 const numbers = [[
     [0,0,0,1,1,0,0,0],
@@ -34,9 +44,19 @@ const numbers = [[
     [0,0,0,1,1,0,0,0],
     [0,0,1,1,1,0,0,0],
     [0,1,1,1,1,1,1,0],
-    [0,1,1,1,1,1,1,0]]];
+    [0,1,1,1,1,1,1,0]],
+    [
+    [0,0,1,1,1,1,0,0],
+    [0,1,1,1,1,1,1,0],
+    [0,0,0,0,0,1,1,0],
+    [0,0,0,1,1,1,1,0],
+    [0,0,0,1,1,1,1,0],
+    [0,0,0,0,0,1,1,0],
+    [0,1,1,1,1,1,1,0],
+    [0,0,1,1,1,1,1,0]]
+];
 
-const currentTime = '121212';
+const currentTime = '121213';
 
 function init() {
     clear();
@@ -46,6 +66,8 @@ function init() {
     setTimeToVisual(currentTime);
     window.cancelAnimationFrame(update);
     window.requestAnimationFrame(update);
+    initDots();
+    initNumbers();
 }
 init();
 
@@ -80,8 +102,10 @@ function setNumberPositions(number, startPos) {
 }
 
 function setTimeToVisual(time) {
-    let timeArray = Array.from(time);
-    let xPosition = Math.ceil((numberOfPointsX - (timeArray.length * itemWidth) + ((timeArray.length - 1) * itemSpacing)) / 2);
+    const timeArray = Array.from(time);
+    const timeArrayLength = timeArray.length;
+    const timeWidth = (timeArrayLength * itemWidth) + ((timeArrayLength - 1) * itemSpacing);
+    let xPosition = Math.ceil((numberOfPointsX - timeWidth) / 2);
     for(let i = 0; i < timeArray.length; i++) {
         let timeChar = timeArray[i];
         setNumberPositions(timeChar - 1, numberOfPointsX * 8 + xPosition);
@@ -95,27 +119,78 @@ function animate() {
     drawNumbers();
 }
 
-function drawDots() {
-    for(let a = 0; a < animatePositions.length; a++) {
-        let currentPosition = animatePositions[a];
+function Dot(drawer,type,x,y,minsize,maxsize,color) {
+    this.init = function() {
+        this.x = x;
+        this.y = y;
+        this.currentX = this.x;
+        this.currentY = this.y;
+        this.size = rnd(0, maxsize);
+        this.type = type;
+        this.maxSize = rnd(minsize, maxsize);
+        this.color = color;
+        this.counter = 0;
+        this.startOffset = rnd(0,startingSpeed);
+        this.growing = true;
+        this.angle = 0;
+        this.angleSpeed = rnd(1,3);
+    };
 
-        ctx.beginPath();
-        ctx.arc(currentPosition.xPos, currentPosition.yPos, circleSize, 0, 2 * Math.PI);
-        ctx.fillStyle = circleFill;
-        ctx.fill();
-        ctx.closePath();
+    this.draw = function() {
+
+        this.currentX = 0.04 * Math.cos(this.angle * (Math.PI/180)) + this.currentX;
+        this.currentY = 0.04 * Math.cos(this.angle * (Math.PI/180)) + this.currentY;
+        this.angle += this.angleSpeed;
+
+        if(this.growing) {
+            this.size += (this.maxSize / growSpeed);
+        } else if(this.type === 1) {
+            this.size -= (this.maxSize / growSpeed);
+        }
+        if(this.size > this.maxSize) {
+            this.growing = false;
+        }
+        if(this.size < 1 && this.type === 1) {
+            this.growing = true;
+        }
+
+        if(this.counter > this.startOffset) {
+            drawer.beginPath();
+            drawer.arc(this.currentX, this.currentY, this.size, 0, 2 * Math.PI);
+            drawer.fillStyle = this.color;
+            drawer.fill();
+            drawer.closePath();
+        }
+
+        this.counter++;
+    };
+}
+
+function initDots() {
+    for(let dot = 0; dot < animatePositions.length; dot++) {
+        let sp = animatePositions[dot];
+        animatePositions[dot] = new Dot(ctx, 1, sp.xPos, sp.yPos, minCircleSize, maxCircleSize,  circleFill);
+        animatePositions[dot].init();
+    }
+}
+
+function initNumbers() {
+    for(let n = 0; n < numberPositions.length; n++) {
+        let sp = numberPositions[n];
+        numberPositions[n] = new Dot(ctx, 2, sp.xPos, sp.yPos, minCircleSizeActive, maxCircleSizeActive, circleFillActive);
+        numberPositions[n].init();
+    }
+}
+
+function drawDots() {
+    for(let dotdraw = 0; dotdraw < animatePositions.length; dotdraw++) {
+        animatePositions[dotdraw].draw();
     }
 }
 
 function drawNumbers() {
-    for(let a = 0; a < numberPositions.length; a++) {
-        let currentPosition = numberPositions[a];
-
-        ctx.beginPath();
-        ctx.arc(currentPosition.xPos, currentPosition.yPos, circleSizeActive, 0, 2 * Math.PI);
-        ctx.fillStyle = circleFillActive;
-        ctx.fill();
-        ctx.closePath();
+    for(let ndraw = 0; ndraw < numberPositions.length; ndraw++) {
+        numberPositions[ndraw].draw();
     }
 }
 
