@@ -20,6 +20,7 @@ const itemWidth = 8;
 const itemSpacing = 1;
 const growSpeed = 50;
 const startingSpeed = 150;
+const movementArc = 0.04;
 
 function rnd(start, end) {
     if (typeof end === 'undefined') { end = start; start = 0; }
@@ -53,10 +54,73 @@ const numbers = [[
     [0,0,0,1,1,1,1,0],
     [0,0,0,0,0,1,1,0],
     [0,1,1,1,1,1,1,0],
-    [0,0,1,1,1,1,1,0]]
+    [0,1,1,1,1,1,1,0]],
+    [
+    [0,0,0,0,0,1,1,0],
+    [0,0,0,0,1,1,1,0],
+    [0,0,0,1,1,0,0,0],
+    [0,0,1,1,0,0,0,0],
+    [0,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,0],
+    [0,0,0,0,1,1,0,0],
+    [0,0,0,0,1,1,0,0]],
+    [
+    [0,0,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,0],
+    [0,1,1,0,0,0,0,0],
+    [0,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,0],
+    [0,0,0,0,0,1,1,0],
+    [0,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,0]],
+    [
+    [0,0,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,0],
+    [0,1,1,0,0,0,0,0],
+    [0,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,0],
+    [0,1,1,0,0,1,1,0],
+    [0,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,0]],
+    [
+    [0,0,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,0],
+    [0,0,0,0,0,1,1,0],
+    [0,0,0,0,0,1,1,0],
+    [0,0,0,0,1,1,0,0],
+    [0,0,0,1,1,0,0,0],
+    [0,0,1,1,0,0,0,0],
+    [0,1,1,0,0,0,0,0]],
+    [
+    [0,0,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,0],
+    [0,1,1,0,0,1,1,0],
+    [0,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,0],
+    [0,1,1,0,0,1,1,0],
+    [0,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,0,0]],
+    [
+    [0,0,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,0],
+    [0,1,1,0,0,1,1,0],
+    [0,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,0],
+    [0,0,0,0,0,1,1,0],
+    [0,0,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,0]],
+    [
+    [0,0,1,1,1,1,1,0],
+    [0,1,1,1,1,1,1,0],
+    [0,1,1,0,0,1,1,0],
+    [0,1,1,0,0,1,1,0],
+    [0,1,1,0,0,1,1,0],
+    [0,1,1,0,0,1,1,0],
+    [0,1,1,1,1,1,1,0],
+    [0,1,1,1,1,1,0,0]],
 ];
 
-const currentTime = '121213';
+const currentTime = '67890';
 
 function init() {
     clear();
@@ -87,6 +151,7 @@ function setGridPositions() {
 function setNumberPositions(number, startPos) {
     let currentAnimatePosition = animatePositions[startPos];
     let iteratePos = startPos;
+    if(number === -1){ number = 9; }
     for(let nrLocation = 0; nrLocation < numbers[number].length; nrLocation++) {
         let numberRow = numbers[number][nrLocation];
         for(let i = 0; i < numberRow.length; i++) {
@@ -138,9 +203,11 @@ function Dot(drawer,type,x,y,minsize,maxsize,color) {
 
     this.draw = function() {
 
-        this.currentX = 0.04 * Math.cos(this.angle * (Math.PI/180)) + this.currentX;
-        this.currentY = 0.04 * Math.cos(this.angle * (Math.PI/180)) + this.currentY;
-        this.angle += this.angleSpeed;
+        if(this.type === 1) {
+            this.currentX = movementArc * Math.cos(this.angle * (Math.PI / 180)) + this.currentX;
+            this.currentY = movementArc * Math.cos(this.angle * (Math.PI / 180)) + this.currentY;
+            this.angle += this.angleSpeed;
+        }
 
         if(this.growing) {
             this.size += (this.maxSize / growSpeed);
