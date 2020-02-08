@@ -20,7 +20,8 @@ const itemWidth = 8;
 const itemSpacing = 1;
 const growSpeed = 50;
 const startingSpeed = 150;
-const movementArc = 0.04;
+const movementArc = 0.04
+const targetDate = new Date(2020,4,4,0,0,0,0);
 
 function rnd(start, end) {
     if (typeof end === 'undefined') { end = start; start = 0; }
@@ -120,13 +121,16 @@ const numbers = [[
     [0,1,1,1,1,1,0,0]],
 ];
 
-const currentTime = '67890';
+function calculateSeconds() {
+    return (Math.round((new Date().getTime() - targetDate.getTime()) / 1000) * -1).toString();
+}
 
 function init() {
     clear();
     canvas.width = 1000;
     canvas.height = 380;
     setGridPositions();
+    currentTime = calculateSeconds();
     setTimeToVisual(currentTime);
     window.cancelAnimationFrame(update);
     window.requestAnimationFrame(update);
@@ -180,6 +184,12 @@ function setTimeToVisual(time) {
 
 function animate() {
     clear();
+    newTime = calculateSeconds();
+    if(newTime !== currentTime) {
+        numberPositions = [];
+        setTimeToVisual(currentTime);
+        initNumbers();
+    }
     drawDots();
     drawNumbers();
 }
@@ -214,9 +224,11 @@ function Dot(drawer,type,x,y,minsize,maxsize,color) {
         } else if(this.type === 1) {
             this.size -= (this.maxSize / growSpeed);
         }
+
         if(this.size > this.maxSize) {
             this.growing = false;
         }
+
         if(this.size < 1 && this.type === 1) {
             this.growing = true;
         }
