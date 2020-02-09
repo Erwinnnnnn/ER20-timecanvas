@@ -146,9 +146,8 @@ function init() {
     setDigitLocations();
     window.cancelAnimationFrame(update);
     window.requestAnimationFrame(update);
-    currentDigitDots = getDotPositionsForDigits();
-    console.log(currentDigitDots);
     initDots();
+    generateDigits();
 }
 init();
 
@@ -173,22 +172,6 @@ function setDigitLocations() {
     }
 }
 
-function getDotPositionsForDigits() {
-
-    if(digit === -1){ digit = 9; }
-    let numberArray = numbers[digit];
-    let iteratePos = loc;
-    let currentDigitDots = [];
-    for(let i = 0; i < numberArray.length; i++) {
-        currentDigitDots.push(iteratePos);
-        for(let s = 0; s < nr.length; s++) {
-            iteratePos++;
-        }
-        iteratePos += numberOfPointsX - 8;
-    }
-    return currentDigitDots;
-}
-
 function getTimeArray(time) {
     const timeArray = Array.from(time);
     if(timeArray.length < totalDigits) {
@@ -200,9 +183,62 @@ function getTimeArray(time) {
     return timeArray;
 }
 
+function generateDigit(digit, loc) {
+    if(digit === -1){ digit = 9; }
+    let numberArray = numbers[digit];
+    let iteratePos = loc;
+    let currentDigitDots = [];
+    for(let i = 0; i < numberArray.length; i++) {
+        currentAnimatePosition = animatePositions[iteratePos];
+        let nr = numberArray[i];
+        let currentDot;
+        for(let s = 0; s < nr.length; s++) {
+            if (s === 1) {
+                currentDot = new Dot(ctx, 2, currentAnimatePosition.xPos, currentAnimatePosition.yPos, minCircleSizeActive, maxCircleSizeActive, circleFillActive);
+                currentDigitDots.push(currentDot);
+            }
+            iteratePos++;
+        }
+        iteratePos += numberOfPointsX - 8;
+    }
+    return currentDigitDots;
+}
+
+function generateDigits() {
+    newTime = calculateSeconds();
+
+    if(typeof currentTime === 'undefined') {
+        timeArray = getTimeArray(newTime);
+        currentTime = newTime;
+        for(let digit = 0; digit < timeArray.length; digit++) {
+            dotslist = generateDigit(timeArray[digit], digitLocations[digit]);
+            activeDotsList.push(dotslist);
+        }
+        for(t = 0; t < activeDotsList.length; t++) {
+            for(tt = 0; t < activeDotsList[t]; t++) {
+                activeDotsList[t][tt].init();
+            }
+        }
+    } else {
+        if (newTime !== currentTime) {
+            newTimeArray = getTimeArray(newTime);
+            currentTime = newTime;
+            let differences = 0;
+            for(t = 0; t < timeArray.length; t++) {
+                if(newTimeArray[t] !== timeArray[t]) {
+                    differences++;
+                }
+            }
+            timeArray = newTimeArray;
+        }
+    }
+}
+
 function animate() {
     clear();
-    drawDots();
+    // drawDots();
+    generateDigits();
+    drawDigits();
 }
 
 function Dot(drawer,type,x,y,minsize,maxsize,color) {
@@ -220,6 +256,12 @@ function Dot(drawer,type,x,y,minsize,maxsize,color) {
         this.growing = true;
         this.angle = 0;
         this.angleSpeed = rnd(0.5,3);
+
+        console.log(this.type);
+
+        // temp
+        this.size = 4;
+        this.startOffset = 0;
     };
 
     this.draw = function() {
@@ -254,31 +296,29 @@ function Dot(drawer,type,x,y,minsize,maxsize,color) {
 
         this.counter++;
     };
-
-    this.setActive = function() {
-        this.color = 'rgba(255,0,0,1)';
-    }
-
-    this.setInActive = function() {
-        this.color = circleFill;
-    }
 }
 
 function initDots() {
-    for(let dot = 0; dot < animatePositions.length; dot++) {
-        let sp = animatePositions[dot];
-        animatePositions[dot] = new Dot(ctx, 1, sp.xPos, sp.yPos, minCircleSize, maxCircleSize,  circleFill);
-        animatePositions[dot].init();
-    }
+    // for(let dot = 0; dot < animatePositions.length; dot++) {
+    //     let sp = animatePositions[dot];
+    //     animatePositions[dot] = new Dot(ctx, 1, sp.xPos, sp.yPos, minCircleSize, maxCircleSize,  circleFill);
+    //     animatePositions[dot].init();
+    // }
 }
 
 function drawDots() {
     for(let dotdraw = 0; dotdraw < animatePositions.length; dotdraw++) {
-        animatePositions[dotdraw].draw();
-        if(rnd(0,100) < 2) {
-            animatePositions[dotdraw].setActive();
-        } else{
-            animatePositions[dotdraw].setInActive();
+        // animatePositions[dotdraw].draw();
+    }
+}
+
+function drawDigits() {
+    // for(let d = 0; d < currentDigits.length; d++) {
+    //     currentDigits[d].draw();
+    // }
+    for(let d = 0; d < activeDotsList.length; d++) {
+        for(let dot = 0; dot < activeDotsList[d]; dot++) {
+            activeDotsList[d][dot].draw();
         }
     }
 }
