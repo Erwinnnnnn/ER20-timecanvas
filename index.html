@@ -11,20 +11,30 @@
         body {
             margin: 0;
             padding: 0;
-            background: #5e6281;
+            background: #411831;
+            overflow: hidden;
         }
         #timeCanvas {
             position: absolute;
             top: 50%;
             left: 50%;
-            margin-left: -500px;
-            margin-top: -190px;
+            margin-left: -550px;
+            margin-top: -225px;
+        }
+        #test {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: #FFF;
         }
     </style>
 </head>
 <body>
 
-    <canvas width="1000" height="380" id="timeCanvas"></canvas>
+    <div id="test">
+
+    </div>
+    <canvas width="1100" height="450" id="timeCanvas"></canvas>
 
     <script src="canvas.js"></script>
 </body>
