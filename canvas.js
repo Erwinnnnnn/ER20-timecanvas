@@ -27,14 +27,14 @@ const circleFillActive = 'rgba(255,255,255,1)';
 const minCircleSize = 0.01;
 const maxCircleSize = 5;
 const minCircleSizeActive = 3;
-const maxCircleSizeActive = 4;
+const maxCircleSizeActive = 6;
 const numberOfPointsX = Math.floor(((canvasWidth  - (margin * 2)) / pointDistance));
 const numberOfPointsY = Math.floor(((canvasHeight  - (margin * 2)) / pointDistance));
 const itemWidth = 8;
 const itemSpacing = 0;
 const growSpeed = 120;
 const startingSpeed = 150;
-const movementArc = 0.04;
+const movementArc = 0.03;
 const targetDate = new Date(2020, 1, 11, 0, 0, 0, 0);
 const totalDigits = 8;
 
@@ -244,9 +244,6 @@ function Dot(drawer,type,x,y,minsize,maxsize,color) {
         this.angle = 0;
         this.angleSpeed = rnd(0.5,3);
         this.active = false;
-
-        this.movement = 0;
-        this.isMovingToPoint = false;
     };
 
     this.draw = function() {
@@ -291,35 +288,11 @@ function Dot(drawer,type,x,y,minsize,maxsize,color) {
     };
 
     this.setActive = function() {
-
-        if(!this.isMovingToPoint) {
-            this.isMovingToPoint = true;
-            this.tx = this.x - this.currentX;
-            this.ty = this.y - this.currentY;
-            this.distance = Math.abs(Math.sqrt(this.tx * this.tx + this.ty * this.ty));
-            this.moveToPointSpeed = 3 / this.distance;
-            this.velX = (this.tx / this.distance) * 3;
-            this.velY = (this.ty / this.distance) * 3;
-            document.getElementById('test').innerHTML = this.moveToPointSpeed;
-        }
-
-        this.movement += 0.02;
-        if(this.isMovingToPoint) {
-            if (this.currentX !== this.x || this.currentY !== this.y) {
-                this.currentX += this.velX;
-                this.currentY += this.velY;
-            } else {
-                this.isMovingToPoint = false;
-            }
-        }
-
         this.color = circleFillActive;
         this.maxSize = rnd(minCircleSizeActive, maxCircleSizeActive);
         this.minSize = minCircleSizeActive;
         this.active = true;
     };
-
-    // https://stackoverflow.com/questions/19041434/html5-canvas-move-directly-to-point
 
     this.setInActive = function() {
         this.color = circleFill;
