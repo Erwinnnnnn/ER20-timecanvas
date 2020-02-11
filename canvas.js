@@ -24,10 +24,10 @@ const canvasWidth = canvas.width;
 const canvasHeight = canvas.height;
 const circleFill = 'rgba(0,0,0,1)';
 const circleFillActive = 'rgba(255,255,255,1)';
-const circleFillFlash = 'rgba(100,31,116,1)';
+const defaultOpacity = 0.4;
 const minCircleSize = 0.01;
 const maxCircleSize = 3;
-const minCircleSizeActive = 3;
+const minCircleSizeActive = 5;
 const maxCircleSizeActive = 6;
 const numberOfPointsX = Math.floor(((canvasWidth  - (margin * 2)) / pointDistance));
 const numberOfPointsY = Math.floor(((canvasHeight  - (margin * 2)) / pointDistance));
@@ -35,20 +35,27 @@ const itemWidth = 8;
 const itemHeight = 8;
 const itemSpacing = 0;
 const growSpeed = 120;
-const startingSpeed = 150;
+const startingSpeed = 500;
 const movementArc = 0.03;
 const targetDate = new Date(2020, 3, 1, 0, 0, 0, 0);
 const totalDigits = 7;
+const startColors = 5;
+const mouseOffsetMove = 20;
 
+let circleFillFlash = 'rgba(255,31,116,1)';
+
+let secondsPassed = 0;
 let currentTime = '';
 let digitLocations = [];
 let currentTimeArray = [];
 let currentDigitDots = [];
 let activeDotsList = [];
 let flashDotsList = [];
-let currentFlashRow = 0;
+let currentFlashRow = -1;
 let currentDigitsActive = [];
 let flashCounter = 0;
+let flashStartCounter = 0;
+let mousePosition = {x: 0, y: 0};
 
 const numbers = [[
     [0,0,0,1,1,0,0,0],
@@ -158,8 +165,26 @@ function init() {
     flashDotsList = setFlashDotsList();
     setupCurrentTimer();
     initDots();
+
+
+    canvas.addEventListener('mousemove', event => {
+        mousePosition.x = event.clientX - canvas.offsetLeft;
+        mousePosition.y = event.clientY - canvas.offsetTop;
+    }, false);
+
+    canvas.addEventListener('click', event => {
+        setBackgroundColor();
+    }, false);
+
+
 }
 init();
+
+function setBackgroundColor() {
+    const randomColors = ['#5b4661','#613C42','#688446','#35845F','#2C8481','#B48F3B','#843CB4'];
+    const randomColor = randomColors[Math.floor(Math.random() * randomColors.length)];
+    document.body.style.background = randomColor;
+}
 
 function setupCurrentTimer() {
     currentTime = calculateSeconds();
@@ -223,23 +248,52 @@ function getTimeArray(time) {
     return timeArray;
 }
 
-function animate() {
+function getRandomColor() {
+    return 'rgba(' + rnd(100,255) + ', ' + rnd(100,255) + ', ' + rnd(100,255) + ', 1)';
+}
+
+function setColorBar(color) {
+    document.getElementById('top').style.background = color;
+    document.getElementById('bottom').style.background = color;
+}
+
+function animate(evt) {
     clear();
     drawDots();
 
-    flashCounter++;
-    if(flashCounter === 5) {
-        currentFlashRow++;
-        flashCounter = 0;
-        if(currentFlashRow > 23) {
-            currentFlashRow = 0;
+    if(secondsPassed > startColors) {
+        flashCounter++;
+        flashStartCounter++;
+        if (flashCounter === 5) {
+            currentFlashRow++;
+            flashCounter = 0;
+            if (currentFlashRow > 23) {
+                currentFlashRow = 0;
+            }
         }
     }
 
     let newTime = calculateSeconds();
     if (newTime !== currentTime) {
+        secondsPassed++;
         currentDigitDots = [];
+        numberDifferences = getTimeDifference(newTime, currentTime);
         setupCurrentTimer();
+        if(secondsPassed > startColors) {
+            // circleFillFlash = getRandomColor();
+            setColorBar(circleFillFlash);
+        }
+    }
+}
+
+function getTimeDifference(t,c) {
+    let ta = t.split("");
+    let tc = c.split("");
+    let diff = 0;
+    for(let i = 0; i < ta.length; i++) {
+        if(ta[i] !== tc[i]) {
+            diff++;
+        }
     }
 }
 
@@ -268,9 +322,10 @@ function Dot(drawer,type,x,y,minsize,maxsize,color) {
         this.active = false;
         this.isFlashing = false;
         this.flashCounter = 0;
-        this.opacity = 0.2;
-        this.defaultOpacity = 0.2;
+        this.opacity = defaultOpacity;
+        this.defaultOpacity = defaultOpacity;
         this.opacityUp = true;
+        this.isTouched = false;
     };
 
     this.draw = function() {
@@ -281,6 +336,10 @@ function Dot(drawer,type,x,y,minsize,maxsize,color) {
             this.angle += this.angleSpeed;
         }
 
+        if(mousePosition.x !== 0 && mousePosition.x > (this.x - mouseOffsetMove) && mousePosition.x < (this.x + mouseOffsetMove) && mousePosition.y !== 0 && mousePosition.y > (this.y - mouseOffsetMove) && mousePosition.y < (this.y + mouseOffsetMove)){
+            this.size = this.maxSize;
+            this.isTouched = true;
+        }
 
         if (this.growing) {
             this.size += (this.maxSize / growSpeed);
@@ -305,7 +364,7 @@ function Dot(drawer,type,x,y,minsize,maxsize,color) {
             this.maxSize = maxsize;
             if(!this.isFlashing) {
                 this.color = circleFill;
-                this.opacity = 0.2;
+                this.opacity = defaultOpacity;
             }
             if (this.size < 1) {
                 this.growing = true;
@@ -313,31 +372,51 @@ function Dot(drawer,type,x,y,minsize,maxsize,color) {
         }
 
         if(this.isFlashing) {
-            this.color = circleFillFlash;
+            if(!this.active && !this.isTouched) {
+                this.color = circleFillFlash;
+            }
             if(this.flashCounter === 0) {
                 this.opacity = 0;
                 this.opacityUp = true;
+                if(!this.active) {
+                    this.size = rnd(maxsize,maxsize+2);
+                } else {
+                    this.size = this.size + 5;
+                }
             }
-            if(this.opacityUp) {
-                this.opacity = this.opacity + 0.10;
+            if(!this.active) {
+                if (this.opacityUp) {
+                    this.opacity = this.opacity + 0.05;
+                } else {
+                    this.opacity = this.opacity - 0.10;
+                }
             } else {
-                this.opacity = this.opacity - 0.05;
+                this.opacity = 1;
             }
             if(this.opacity > 0.99){
                 this.opacityUp = false;
             }
             this.flashCounter++;
-            if(this.opacity < this.defaultOpacity) {
+            if(this.size > 1) {
+                this.size -= 0.05;
+            } else {
+                this.size = rnd(minsize, maxsize);
+            }
+            if(this.opacity < this.defaultOpacity && !this.active) {
                 this.opacity = this.defaultOpacity;
             }
-            if(this.flashCounter === 40) {
+            if(this.flashCounter === 60) {
                 this.color = circleFill;
-                this.opacity = 0.2;
+                this.opacity = defaultOpacity;
                 this.isFlashing = false;
+                this.isTouched = false;
                 this.flashCounter = 0;
             }
         }
 
+        if(this.isTouched) {
+            this.opacity = 1;
+        }
 
 
         if(this.counter > this.startOffset) {
@@ -376,23 +455,11 @@ function setFlashDotsList() {
                 rowArray.push(currentOffsetStart + o);
             }
             currentOffsetStart += numberOfPointsX;
-            // if(row === 7) {
-            //     currentOffsetStart += numberOfPointsX * 8;
-            // }
             digitArrayRows.push(rowArray);
         }
         flashDotsList.push(digitArrayRows);
 
     }
-    // for(let d = 0; d < flashDotsList.length; d++) {
-    //     for(let digit = 0; digit < flashDotsList[d].length; digit++) {
-    //         for(let row = 0; row < flashDotsList[d][digit].length; row++) {
-    //             console.log(flashDotsList[d][digit]);
-    //         }
-    //     }
-    //
-    // }
-    console.log(flashDotsList);
     return flashDotsList;
 }
 
@@ -407,8 +474,8 @@ function initDots() {
 function drawDots() {
     for(let d = 0; d < flashDotsList.length; d++) {
         for(let digit = 0; digit < flashDotsList[d].length; digit++) {
-            for(let row = 0; row < flashDotsList[d][digit].length; row++) {
-                if(digit === currentFlashRow) {
+            for (let row = 0; row < flashDotsList[d][digit].length; row++) {
+                if (digit === currentFlashRow) {
                     animatePositions[flashDotsList[d][digit][row]].setFlash();
                 }
             }
