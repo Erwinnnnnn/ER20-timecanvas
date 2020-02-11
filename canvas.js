@@ -22,8 +22,9 @@ const pointDistance = 15;
 const margin = 40;
 const canvasWidth = canvas.width;
 const canvasHeight = canvas.height;
-const circleFill = 'rgba(255,255,255,1)';
+const circleFill = 'rgba(0,0,0,1)';
 const circleFillActive = 'rgba(255,255,255,1)';
+const circleFillFlash = 'rgba(100,31,116,1)';
 const minCircleSize = 0.01;
 const maxCircleSize = 3;
 const minCircleSizeActive = 3;
@@ -37,7 +38,7 @@ const growSpeed = 120;
 const startingSpeed = 150;
 const movementArc = 0.03;
 const targetDate = new Date(2020, 3, 1, 0, 0, 0, 0);
-const totalDigits = 8;
+const totalDigits = 7;
 
 let currentTime = '';
 let digitLocations = [];
@@ -46,6 +47,7 @@ let currentDigitDots = [];
 let activeDotsList = [];
 let flashDotsList = [];
 let currentFlashRow = 0;
+let currentDigitsActive = [];
 let flashCounter = 0;
 
 const numbers = [[
@@ -154,7 +156,6 @@ function init() {
     window.requestAnimationFrame(update);
     digitLocations = setDigitLocations();
     flashDotsList = setFlashDotsList();
-
     setupCurrentTimer();
     initDots();
 }
@@ -185,7 +186,7 @@ function setGridPositions() {
 }
 
 function setDigitLocations() {
-    let xPosition = Math.ceil((numberOfPointsX - ((8 * itemWidth) + (7 * itemSpacing))) / 2) - 1;
+    let xPosition = Math.ceil((numberOfPointsX - ((totalDigits * itemWidth) + ((totalDigits - 1) * itemSpacing))) / 2) - 1;
     for(let i = 0; i < totalDigits; i++) {
         digitLocations.push(numberOfPointsX * ((numberOfPointsY - itemWidth) / 2) + xPosition);
         xPosition += itemSpacing + itemWidth;
@@ -227,10 +228,10 @@ function animate() {
     drawDots();
 
     flashCounter++;
-    if(flashCounter === 15) {
+    if(flashCounter === 5) {
         currentFlashRow++;
         flashCounter = 0;
-        if(currentFlashRow > 15) {
+        if(currentFlashRow > 23) {
             currentFlashRow = 0;
         }
     }
@@ -268,6 +269,8 @@ function Dot(drawer,type,x,y,minsize,maxsize,color) {
         this.isFlashing = false;
         this.flashCounter = 0;
         this.opacity = 0.2;
+        this.defaultOpacity = 0.2;
+        this.opacityUp = true;
     };
 
     this.draw = function() {
@@ -299,6 +302,7 @@ function Dot(drawer,type,x,y,minsize,maxsize,color) {
                 this.growing = true;
             }
         } else {
+            this.maxSize = maxsize;
             if(!this.isFlashing) {
                 this.color = circleFill;
                 this.opacity = 0.2;
@@ -309,12 +313,26 @@ function Dot(drawer,type,x,y,minsize,maxsize,color) {
         }
 
         if(this.isFlashing) {
-            this.opacity = 1;
+            this.color = circleFillFlash;
+            if(this.flashCounter === 0) {
+                this.opacity = 0;
+                this.opacityUp = true;
+            }
+            if(this.opacityUp) {
+                this.opacity = this.opacity + 0.10;
+            } else {
+                this.opacity = this.opacity - 0.05;
+            }
+            if(this.opacity > 0.99){
+                this.opacityUp = false;
+            }
             this.flashCounter++;
-            this.opacity = this.opacity - 0.1;
+            if(this.opacity < this.defaultOpacity) {
+                this.opacity = this.defaultOpacity;
+            }
             if(this.flashCounter === 40) {
                 this.color = circleFill;
-                this.opacity = 0;
+                this.opacity = 0.2;
                 this.isFlashing = false;
                 this.flashCounter = 0;
             }
@@ -352,15 +370,15 @@ function setFlashDotsList() {
         let cl = digitLocations[d];
         let currentOffsetStart = cl - (8 * numberOfPointsX) + 2;
         let digitArrayRows = [];
-        for(let row = 0; row < numberOfPointsY - itemHeight + 1; row++) {
+        for(let row = 0; row < numberOfPointsY  + 1; row++) {
             let rowArray = [];
             for (let o = 0; o < 6; o++) {
                 rowArray.push(currentOffsetStart + o);
             }
             currentOffsetStart += numberOfPointsX;
-            if(row === 7) {
-                currentOffsetStart += numberOfPointsX * 8;
-            }
+            // if(row === 7) {
+            //     currentOffsetStart += numberOfPointsX * 8;
+            // }
             digitArrayRows.push(rowArray);
         }
         flashDotsList.push(digitArrayRows);
