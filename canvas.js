@@ -322,6 +322,8 @@ function Dot(drawer,type,x,y,minsize,maxsize,color) {
         this.active = false;
         this.isFlashing = false;
         this.flashCounter = 0;
+        this.flashStartCounter = 0;
+        this.flashStartOffset = 0;
         this.opacity = defaultOpacity;
         this.defaultOpacity = defaultOpacity;
         this.opacityUp = true;
@@ -372,45 +374,55 @@ function Dot(drawer,type,x,y,minsize,maxsize,color) {
         }
 
         if(this.isFlashing) {
-            if(!this.active && !this.isTouched) {
-                this.color = circleFillFlash;
-            }
-            if(this.flashCounter === 0) {
-                this.opacity = 0;
-                this.opacityUp = true;
-                if(!this.active) {
-                    this.size = rnd(maxsize,maxsize+2);
-                } else {
-                    this.size = this.size + 5;
+
+            this.flashStartCounter++;
+            if(this.flashStartCounter > this.flashStartOffset) {
+
+                if (!this.active && !this.isTouched) {
+                    this.color = circleFillFlash;
                 }
-            }
-            if(!this.active) {
-                if (this.opacityUp) {
-                    this.opacity = this.opacity + 0.05;
-                } else {
-                    this.opacity = this.opacity - 0.10;
+                if (this.flashCounter === 0) {
+                    this.opacity = 0;
+                    this.opacityUp = true;
+                    if (!this.active) {
+                        this.size = rnd(maxsize, maxsize + 2);
+                    } else {
+                        this.size = this.size + 5;
+                    }
                 }
-            } else {
-                this.opacity = 1;
-            }
-            if(this.opacity > 0.99){
-                this.opacityUp = false;
-            }
-            this.flashCounter++;
-            if(this.size > 1) {
-                this.size -= 0.05;
-            } else {
-                this.size = rnd(minsize, maxsize);
-            }
-            if(this.opacity < this.defaultOpacity && !this.active) {
-                this.opacity = this.defaultOpacity;
-            }
-            if(this.flashCounter === 60) {
-                this.color = circleFill;
-                this.opacity = defaultOpacity;
-                this.isFlashing = false;
-                this.isTouched = false;
-                this.flashCounter = 0;
+
+
+                this.flashCounter++;
+
+                if (!this.active) {
+                    if (this.opacityUp) {
+                        this.opacity = this.opacity + 0.05;
+                    } else {
+                        this.opacity = this.opacity - 0.10;
+                    }
+                } else {
+                    this.opacity = 1;
+                }
+                if (this.opacity > 0.99) {
+                    this.opacityUp = false;
+                }
+
+                if (this.size > 1) {
+                    this.size -= 0.05;
+                } else {
+                    this.size = rnd(minsize, maxsize);
+                }
+                if (this.opacity < this.defaultOpacity && !this.active) {
+                    this.opacity = this.defaultOpacity;
+                }
+                if (this.flashCounter === 60) {
+                    this.color = circleFill;
+                    this.opacity = defaultOpacity;
+                    this.isFlashing = false;
+                    this.isTouched = false;
+                    this.flashCounter = 0;
+                    this.flashStartCounter = 0;
+                }
             }
         }
 
@@ -438,8 +450,9 @@ function Dot(drawer,type,x,y,minsize,maxsize,color) {
         this.active = false;
     }
 
-    this.setFlash = function() {
+    this.setFlash = function(r) {
         this.isFlashing = true;
+        this.flashStartOffset = r;
     }
 }
 
@@ -476,7 +489,7 @@ function drawDots() {
         for(let digit = 0; digit < flashDotsList[d].length; digit++) {
             for (let row = 0; row < flashDotsList[d][digit].length; row++) {
                 if (digit === currentFlashRow) {
-                    animatePositions[flashDotsList[d][digit][row]].setFlash();
+                    animatePositions[flashDotsList[d][digit][row]].setFlash(row * 2);
                 }
             }
         }
