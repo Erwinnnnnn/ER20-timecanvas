@@ -35,12 +35,12 @@ const itemWidth = 8;
 const itemHeight = 8;
 const itemSpacing = 0;
 const growSpeed = 120;
-const startingSpeed = 500;
-const movementArc = 0.03;
+const startingSpeed = 100;
+const movementArc = 0.07;
 const targetDate = new Date(2020, 3, 1, 0, 0, 0, 0);
 const totalDigits = 7;
-const startColors = 5;
-const mouseOffsetMove = 20;
+const startColors = 2;
+const mouseOffsetMove = 10;
 
 let circleFillFlash = 'rgba(255,31,116,1)';
 
@@ -264,11 +264,12 @@ function animate(evt) {
     if(secondsPassed > startColors) {
         flashCounter++;
         flashStartCounter++;
-        if (flashCounter === 5) {
+        if (flashCounter === 3) {
             currentFlashRow++;
             flashCounter = 0;
             if (currentFlashRow > 23) {
-                currentFlashRow = 0;
+                currentFlashRow = -1;
+                secondsPassed = 0;
             }
         }
     }
@@ -280,7 +281,7 @@ function animate(evt) {
         numberDifferences = getTimeDifference(newTime, currentTime);
         setupCurrentTimer();
         if(secondsPassed > startColors) {
-            // circleFillFlash = getRandomColor();
+            circleFillFlash = getRandomColor();
             setColorBar(circleFillFlash);
         }
     }
@@ -328,19 +329,22 @@ function Dot(drawer,type,x,y,minsize,maxsize,color) {
         this.defaultOpacity = defaultOpacity;
         this.opacityUp = true;
         this.isTouched = false;
+        this.movementArc = movementArc;
+        this.increaseMovement = false;
+        this.returnMovement = false;
     };
 
     this.draw = function() {
 
         if(!this.active) {
-            this.currentX = movementArc * Math.cos(this.angle * (Math.PI / 180)) + this.currentX;
-            this.currentY = movementArc * Math.cos(this.angle * (Math.PI / 180)) + this.currentY;
+            this.currentX =  this.movementArc * Math.cos(this.angle * (Math.PI / 180)) + this.currentX;
+            this.currentY =  this.movementArc * Math.cos(this.angle * (Math.PI / 180)) + this.currentY;
             this.angle += this.angleSpeed;
         }
 
         if(mousePosition.x !== 0 && mousePosition.x > (this.x - mouseOffsetMove) && mousePosition.x < (this.x + mouseOffsetMove) && mousePosition.y !== 0 && mousePosition.y > (this.y - mouseOffsetMove) && mousePosition.y < (this.y + mouseOffsetMove)){
-            this.size = this.maxSize;
             this.isTouched = true;
+            this.size = 10;
         }
 
         if (this.growing) {
@@ -348,6 +352,35 @@ function Dot(drawer,type,x,y,minsize,maxsize,color) {
         } else {
             this.size -= (this.maxSize / growSpeed);
         }
+
+        if(this.isTouched) {
+            if(!this.increaseMovement && !this.returnMovement) {
+                this.maxSize = 0.1;
+                this.increaseMovement = true;
+            }
+        }
+
+        if(this.increaseMovement) {
+            this.movementArc += 0.01;
+            this.isTouched = false;
+            if(this.movementArc > 3) {
+                this.movementArc = movementArc;
+                this.increaseMovement = false;
+                this.returnMovement = true;
+            }
+        }
+
+        if(this.returnMovement) {
+            this.movementArc -= 0.1;
+            if(this.movementArc < movementArc) {
+                this.movementArc = movementArc;
+                this.increaseMovement = false;
+                this.returnMovement = false;
+                this.isTouched = false;
+            }
+        }
+
+
 
 
         if(this.size > this.maxSize) {
@@ -392,6 +425,8 @@ function Dot(drawer,type,x,y,minsize,maxsize,color) {
                 }
 
 
+
+
                 this.flashCounter++;
 
                 if (!this.active) {
@@ -408,14 +443,14 @@ function Dot(drawer,type,x,y,minsize,maxsize,color) {
                 }
 
                 if (this.size > 1) {
-                    this.size -= 0.05;
+                    this.size -= 0.14;
                 } else {
                     this.size = rnd(minsize, maxsize);
                 }
                 if (this.opacity < this.defaultOpacity && !this.active) {
                     this.opacity = this.defaultOpacity;
                 }
-                if (this.flashCounter === 60) {
+                if (this.flashCounter === 10) {
                     this.color = circleFill;
                     this.opacity = defaultOpacity;
                     this.isFlashing = false;
